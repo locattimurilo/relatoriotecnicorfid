@@ -1,7 +1,7 @@
 # 📡 Relatório Técnico — Investigação de Comunicação de Leitor RFID UHF
 
 ## 👋 Introdução
-Este relatório documenta a análise e as tentativas de comunicação realizadas com um leitor **RFID UHF**.  
+Este relatório documenta a análise e as tentativas de comunicação realizadas com um leitor **RFID UHF**, eu apenas recebi ele sem manual, documento ou qualquer outra coisa, então todas as informações foram encontradas manualmente, o objetivo era entender como ele se comunica para tentar posteriormente criar um script!  
 
 A linha de ação foi:  
 1. 📖 Leitura técnica inicial  
