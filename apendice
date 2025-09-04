@@ -1,0 +1,81 @@
+# 📎 Apêndice A — Prints e Evidências Preservadas
+
+## 🔄 Heartbeats / Handshake Observados  
+Capturados via **Wireshark/tcpdump**, trechos originais:
+
+1:32:34.377649 IP 192.168.0.5.1969 > 255.255.255.255.4444: UDP, length 20
+0x0000: 4500 0030 0e0f 0000 8011 6c01 c0a8 0005
+0x0010: ffff ffff 07b1 115c 001c d14a f012 00c0
+0x0020: a800 0507 b131 3233 3435 3637 3839 30cc
+
+21:33:16.375529 ... UDP, length 20
+0x0000: 4500 0030 0e20 0000 8011 6bf0 c0a8 0005
+0x0010: ffff ffff 07b1 115c 001c d14a f012 00c0
+0x0020: a800 0507 b131 3233 3435 3637 3839 30cc
+
+
+---
+
+## 🔍 Varreduras e Comandos de Tentativa  
+
+nmap -e enp3s0 -Pn -sU -p 1-1000 192.168.0.5 --max-retries 1
+resultado: 4444/udp ativa; 386/udp e 717/udp open|filtered; TCP fechado.
+
+echo "HELLO" | nc -u 192.168.0.5 4444
+echo -ne '\x01\x00' | nc -u 192.168.0.5 4444
+Sem resposta.
+
+
+---
+
+## 🐍 Trechos do programa.py  
+
+Descoberta por ARP e fallback UDP
+Preenchimento de IP_LEITOR / MAC_LEITOR
+Filtra porta 1969 (origem do leitor)
+
+epc = decode_epc(udp_payload)
+print('[HH:MM:SS] Tag detectada: {epc}')
+
+
+---
+
+## 🔬 Engenharia Reversa — DLL  
+
+Análise no **Ghidra** revelou exports relevantes:  
+
+Net_Connect, OpenCom, ReadConfig,
+UhfGetConfig, UhfSetOutPower, UhfGetWorkMode, UhfReadTag ...
+
+
+Referências diretas a **255.255.255.255** e chamadas de **socket/WSA**, coerentes com o padrão de broadcast observado.
+
+---
+
+## 📡 Capturas Extendidas (tcpdump)
+
+tcpdump -i enp3s0 -nn -X host 192.168.0.5 and port 4444
+
+21:32:34.377649 IP 192.168.0.5.1969 > 255.255.255.255.4444: UDP, length 20
+0x0000: 4500 0030 0e0f 0000 8011 6c01 c0a8 0005 E..0......l.....
+0x0010: ffff ffff 07b1 115c 001c d14a f012 00c0 ..........J....
+0x0020: a800 0507 b131 3233 3435 3637 3839 30cc .....1234567890.
+
+21:32:43.671130 IP 192.168.0.100.33668 > 192.168.0.5.4444: UDP, length 6
+0x0000: 4500 0022 588e 4000 4011 6083 c0a8 0064 E.."X.@.@.`....d
+0x0010: c0a8 0005 8384 115c 000e 059c 4845 4c4c ...........HELL
+0x0020: 4f0a O.
+
+21:32:59.959472 IP 192.168.0.100.55124 > 192.168.0.5.4444: UDP, length 2
+0x0000: 4500 001e be20 4000 4011 faf4 c0a8 0064 E.....@.@......d
+0x0010: c0a8 0005 d754 115c 000a 946f 0100 .....T....o..
+
+
+---
+
+## ✅ Conclusão Técnica do Apêndice  
+
+Os registros confirmam:  
+- A existência de **beacon periódico** pela porta **4444/UDP**.  
+- A **ineficácia de comandos triviais** (`nc`, payloads simples).  
+- A necessidade de iniciar **handshake via SDK/DLL** para abrir canal de comunicação real.  
